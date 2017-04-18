@@ -90,8 +90,9 @@ namespace Righthand.Immutable
 
         private MethodDeclarationSyntax CreateCloneMethod(string typeName, IEnumerable<ParameterSyntax> parameters)
         {
-            string arguments = string.Join(", ", parameters.Select(p => $"Param<{p.Type}>? {p.Identifier.Text}"));
-            string constructorArguments = string.Join(", ", parameters.Select(p => p.Identifier.Text).Select(n => $"{n} ?? {PascalCasing(n)}"));
+            string arguments = string.Join(", ", parameters.Select(p => $"Param<{p.Type}>? {p.Identifier.Text} = null"));
+            string constructorArguments = string.Join(",\n", parameters.Select(p => p.Identifier.Text)
+                .Select(n => $"{n}.HasValue ? {n}.Value.Value : {PascalCasing(n)}"));
             string code = $@"return new {typeName}({constructorArguments});";
             var methodArugmentsList = SyntaxFactory.ParseParameterList($"({arguments})");
             var x = SyntaxFactory.MethodDeclaration(SyntaxFactory.IdentifierName(typeName), "Clone")
