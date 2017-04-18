@@ -2,7 +2,7 @@
 
 [![NuGet](https://img.shields.io/nuget/v/Righthand.Immutable.svg)](https://www.nuget.org/packages/Righthand.Immutable)
 
-This library is a part of an open source tool that provides support for generating C# immutable types and a spread operator over generated immutable types. It allows easier creation of immutable types by generating required code out of a constructor.
+An open source tool that provides support for generating C# immutable types and a spread operator over generated immutable types. It allows easier creation of immutable types by generating required code out of a constructor.
 
 Current features:
 
