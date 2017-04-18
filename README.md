@@ -15,8 +15,29 @@ It works together with [Righthand.Immutable](https://www.nuget.org/packages/Righ
 
 1. Install [Righthand.Immutable](https://marketplace.visualstudio.com/items?itemName=MihaMarkic.RighthandImmutable) VSIX extension
 1. Create a new .net project.  
-1. Add [Righthand.Immutable](https://www.nuget.org/packages/Righthand.Immutable) NuGet package
-1. Add a "to-be" immutable class with a constructor containg arguments that are mapped to properties
+2. Add support code (basically a singe struct)  
+a) Add [Righthand.Immutable](https://www.nuget.org/packages/Righthand.Immutable) NuGet package or  
+b) Include this code somewhere in the project
+```csharp
+namespace Righthand.Immutable
+{
+    public struct Param<T>
+    {
+        public T Value { get; set; }
+
+        public static implicit operator Param<T>(T value)
+        {
+            return new Param<T> { Value = value };
+        }
+
+        public static implicit operator T(Param<T> param)
+        {
+            return param.Value;
+        }
+    }
+}
+```
+3. Add a "to-be" immutable class with a constructor containg arguments that are mapped to properties
 ```csharp
 public class MyImmutable
 {
@@ -24,9 +45,9 @@ public class MyImmutable
     { }
 }
 ```
-5. Place a caret over MyImmutable class name
-6. Pick "Implement immutable type" refactoring.
-7. Final code should look like:
+4. Place a caret over MyImmutable class name
+5. Pick "Implement immutable type" refactoring.
+6. Final code should look like:
 ```csharp
 public class MyImmutable
     {
