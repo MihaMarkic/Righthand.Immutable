@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard1.0</TargetFramework>
+    <PackageId>Righthand.Immutable</PackageId>
+    <PackageVersion>1.0.0</PackageVersion>
+    <Authors>Miha Markic</Authors>
+    <Description>Support library for immutable types.</Description>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <PackageReleaseNotes>Initial release</PackageReleaseNotes>
+    <Copyright>Copyright 2017 (c) Righthand. All rights reserved.</Copyright>
+    <PackageTags>c# immutable</PackageTags>
+    <Company>Righthand</Company>
+    <PackageProjectUrl></PackageProjectUrl>
+    <RepositoryUrl>https://github.com/MihaMarkic/Righthand.Immutable</RepositoryUrl>
+  </PropertyGroup>
+</Project>
