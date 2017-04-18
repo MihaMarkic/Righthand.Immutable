@@ -6,7 +6,8 @@ This library is a part of an open source tool that provides support for generati
 
 Current features:
 
-    Place caret on type declaration and pick Implement immutable type refactoring. It will create or replace all required properties with readonly properties and create or replace Clone method. 
+* Place caret on type declaration and pick Implement immutable type refactoring. It will create or replace all required properties with readonly properties and create or replace Clone method. 
+* Creates getter properties and a spread-like operator though Clone method
 
 It works together with [Righthand.Immutable](https://www.nuget.org/packages/Righthand.Immutable) NuGet package.
 
