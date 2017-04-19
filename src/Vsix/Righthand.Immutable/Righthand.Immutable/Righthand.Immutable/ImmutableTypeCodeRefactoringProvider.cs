@@ -106,15 +106,25 @@ namespace Righthand.Immutable
             CancellationToken cancellationToken)
         {
             var root = await document.GetSyntaxRootAsync();
-            ClassDeclarationSyntax cds = (ClassDeclarationSyntax)typeDecl;
+            ClassDeclarationSyntax cds = typeDecl as ClassDeclarationSyntax;
+            StructDeclarationSyntax sds = typeDecl as StructDeclarationSyntax;
 
             BlockSyntax newBody = CreateConstructorBody(constructor.ParameterList.Parameters);
             var newConstructor = constructor.WithBody(newBody);
             var newMembers = CreateProperties(constructor.ParameterList.Parameters);
             newMembers = newMembers.Add(newConstructor);
-            var cloneMethod = CreateCloneMethod(cds.Identifier.Text, constructor.ParameterList.Parameters);
+            string typeIdentifierText = cds != null ? cds.Identifier.Text: sds.Identifier.Text;
+            var cloneMethod = CreateCloneMethod(typeIdentifierText, constructor.ParameterList.Parameters);
             newMembers = newMembers.Add(cloneMethod);
-            var newRoot = (CompilationUnitSyntax)root.ReplaceNode(typeDecl, cds.WithMembers(newMembers));
+            CompilationUnitSyntax newRoot;
+            if (cds != null)
+            {
+                newRoot = (CompilationUnitSyntax)root.ReplaceNode(typeDecl, cds.WithMembers(newMembers));
+            }
+            else
+            {
+                newRoot = (CompilationUnitSyntax)root.ReplaceNode(typeDecl, sds.WithMembers(newMembers));
+            }
             bool hasImmutableNamespace = newRoot.Usings
                 .Where(u => u.Name.Kind() == SyntaxKind.QualifiedName)
                 .Where(n => n.Name.ToFullString() == "Righthand.Immutable").Any();
