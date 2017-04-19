@@ -15,9 +15,9 @@ It works together with [Righthand.Immutable](https://www.nuget.org/packages/Righ
 
 1. Install [Righthand.Immutable](https://marketplace.visualstudio.com/items?itemName=MihaMarkic.RighthandImmutable) VSIX extension
 1. Create a new .net project.  
-2. Add support code (basically a singe struct)  
+2. Add support code (basically a single struct)  
 a) Add [Righthand.Immutable](https://www.nuget.org/packages/Righthand.Immutable) NuGet package or  
-b) Include this code somewhere in the project
+b) include this code somewhere in the project
 ```csharp
 namespace Righthand.Immutable
 {
