@@ -43,11 +43,6 @@ namespace Righthand.Immutable
             context.RegisterRefactoring(action);
         }
 
-        private string PascalCasing(string name)
-        {
-            return char.ToUpper(name[0]) + name.Substring(1);
-        }
-
         private BlockSyntax CreateConstructorBody(IEnumerable<ParameterSyntax> parameters)
         {
             SyntaxList<StatementSyntax> statements = new SyntaxList<StatementSyntax>();
@@ -57,7 +52,7 @@ namespace Righthand.Immutable
                     SyntaxFactory.ExpressionStatement(
                         SyntaxFactory.AssignmentExpression(
                             SyntaxKind.SimpleAssignmentExpression,
-                                SyntaxFactory.IdentifierName(PascalCasing(parameter.Identifier.Text)),
+                                SyntaxFactory.IdentifierName(Common.PascalCasing(parameter.Identifier.Text)),
                                 SyntaxFactory.IdentifierName(parameter.Identifier.Text)));
                 statements = statements.Add(assignment);
             }
@@ -70,7 +65,7 @@ namespace Righthand.Immutable
             var result = SyntaxFactory.List<MemberDeclarationSyntax>();
             foreach (var parameter in parameters)
             {
-                string name = PascalCasing(parameter.Identifier.Text);
+                string name = Common.PascalCasing(parameter.Identifier.Text);
                 var newProperty = SyntaxFactory.PropertyDeclaration(parameter.Type, name)
                     .WithAccessorList(
                         SyntaxFactory.AccessorList(
@@ -92,7 +87,7 @@ namespace Righthand.Immutable
         {
             string arguments = string.Join(", ", parameters.Select(p => $"Param<{p.Type}>? {p.Identifier.Text} = null"));
             string constructorArguments = string.Join(",\n", parameters.Select(p => p.Identifier.Text)
-                .Select(n => $"{n}.HasValue ? {n}.Value.Value : {PascalCasing(n)}"));
+                .Select(n => $"{n}.HasValue ? {n}.Value.Value : {Common.PascalCasing(n)}"));
             string code = $@"return new {typeName}({constructorArguments});";
             var methodArugmentsList = SyntaxFactory.ParseParameterList($"({arguments})");
             var x = SyntaxFactory.MethodDeclaration(SyntaxFactory.IdentifierName(typeName), "Clone")
