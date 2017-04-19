@@ -8,6 +8,11 @@ var librarySlnDirectory = src + Directory(libName);
 var libraryProjectDirectory = librarySlnDirectory + Directory(name);
 var libraryProject = libraryProjectDirectory + File(name + ".csproj");
 
+Task("BuildVsix")
+    .Does(() => {
+        
+    });
+
 Task("BuildNuGet")
     .Does(() => {
         var settings = new MSBuildSettings {
