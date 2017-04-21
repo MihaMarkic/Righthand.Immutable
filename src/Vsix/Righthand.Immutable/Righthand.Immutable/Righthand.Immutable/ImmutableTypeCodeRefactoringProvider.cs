@@ -32,7 +32,12 @@ namespace Righthand.Immutable
                 return;
             }
 
-            var constructor = (ConstructorDeclarationSyntax)typeDecl.ChildNodes().SingleOrDefault(cn => cn.Kind() == SyntaxKind.ConstructorDeclaration);
+            var constructors = typeDecl.ChildNodes().Where(cn => cn.Kind() == SyntaxKind.ConstructorDeclaration).Cast< ConstructorDeclarationSyntax>().ToArray();
+            if (constructors.Length != 1)
+            {
+                return;
+            }
+            var constructor = constructors[0];
             if (constructor == null || constructor.ParameterList.Parameters.Count == 0)
             {
                 return;
