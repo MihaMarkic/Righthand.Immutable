@@ -38,7 +38,7 @@ namespace Righthand.Immutable
                 return;
             }
             var constructor = constructors[0];
-            if (constructor == null || constructor.ParameterList.Parameters.Count == 0)
+            if (constructor == null || (constructor.ParameterList.Parameters.Count == 0 && typeDecl.BaseList == null))
             {
                 return;
             }
