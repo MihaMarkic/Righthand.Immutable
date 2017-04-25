@@ -111,8 +111,10 @@ namespace Righthand.Immutable
                         else
                         {
                             var getter = propertyDeclaration.AccessorList?.Accessors.Where(a => a.IsKind(SyntaxKind.GetAccessorDeclaration)).SingleOrDefault();
+                            bool isAbstract = propertyDeclaration.Modifiers.Any(m => m.Kind() == SyntaxKind.AbstractKeyword);
                             // include getters with body but only if no setter
-                            if (getter?.DescendantNodes().Any() ?? false)
+
+                            if (isAbstract || (getter?.DescendantNodes().Any() ?? false))
                             {
                                 var setter = propertyDeclaration.AccessorList?.Accessors.Where(a => a.IsKind(SyntaxKind.SetAccessorDeclaration)).SingleOrDefault();
                                 if (setter == null)
@@ -204,8 +206,12 @@ namespace Righthand.Immutable
             var newMembers = CreateProperties(parameters.Where(p => !p.IsDefinedInBaseType));
             newMembers = newMembers.Add(newConstructor);
             string typeIdentifierText = cds != null ? cds.Identifier.Text: sds.Identifier.Text;
-            var cloneMethod = CreateCloneMethod(typeIdentifierText, parameters);
-            newMembers = newMembers.Add(cloneMethod);
+            bool isTypeAbstract = typeDecl.Modifiers.Any(m => m.Kind() == SyntaxKind.AbstractKeyword);
+            if (!isTypeAbstract)
+            {
+                var cloneMethod = CreateCloneMethod(typeIdentifierText, parameters);
+                newMembers = newMembers.Add(cloneMethod);
+            }
             var customMembers = GetCustomMembers(typeDecl.Members);
             newMembers = newMembers.AddRange(customMembers);
             CompilationUnitSyntax newRoot;

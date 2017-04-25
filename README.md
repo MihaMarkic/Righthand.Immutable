@@ -13,6 +13,9 @@ It works together with [Righthand.Immutable](https://www.nuget.org/packages/Righ
 
 ## Visual Studio Extension Release notes
 
+1.1.1
+- supports abstract types and properties
+
 1.1.0
 - support for inheritance
     - base type has to have a single constructor
