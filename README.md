@@ -13,6 +13,12 @@ It works together with [Righthand.Immutable](https://www.nuget.org/packages/Righ
 
 ## Visual Studio Extension Release notes
 
+1.1.0
+- support for inheritance
+    - base type has to have a single constructor
+    - missing arguments (ones from base type constructor) in constructor are added if not present
+    - call to base(...) initializer is automatically added when missing
+
 1.0.3
 - properties with getter bodies and no setters are persisted
 - lambda properties are persisted

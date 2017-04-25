@@ -48,7 +48,7 @@ namespace Righthand.Immutable
             context.RegisterRefactoring(action);
         }
 
-        private BlockSyntax CreateConstructorBody(IEnumerable<ParameterSyntax> parameters)
+        private BlockSyntax CreateConstructorBody(IEnumerable<ParameterDefinition> parameters)
         {
             SyntaxList<StatementSyntax> statements = new SyntaxList<StatementSyntax>();
             foreach (var parameter in parameters)
@@ -57,20 +57,20 @@ namespace Righthand.Immutable
                     SyntaxFactory.ExpressionStatement(
                         SyntaxFactory.AssignmentExpression(
                             SyntaxKind.SimpleAssignmentExpression,
-                                SyntaxFactory.IdentifierName(Common.PascalCasing(parameter.Identifier.Text)),
-                                SyntaxFactory.IdentifierName(parameter.Identifier.Text)));
+                                SyntaxFactory.IdentifierName(Common.PascalCasing(parameter.Name)),
+                                SyntaxFactory.IdentifierName(parameter.Name)));
                 statements = statements.Add(assignment);
             }
             BlockSyntax newBody = SyntaxFactory.Block(statements);
             return newBody;
         }
 
-        private SyntaxList<MemberDeclarationSyntax> CreateProperties(IEnumerable<ParameterSyntax> parameters)
+        private SyntaxList<MemberDeclarationSyntax> CreateProperties(IEnumerable<ParameterDefinition> parameters)
         {
             var result = SyntaxFactory.List<MemberDeclarationSyntax>();
             foreach (var parameter in parameters)
             {
-                string name = Common.PascalCasing(parameter.Identifier.Text);
+                string name = Common.PascalCasing(parameter.Name);
                 var newProperty = SyntaxFactory.PropertyDeclaration(parameter.Type, name)
                     .WithAccessorList(
                         SyntaxFactory.AccessorList(
@@ -135,10 +135,10 @@ namespace Righthand.Immutable
             return result.ToArray();
         }
 
-        private MethodDeclarationSyntax CreateCloneMethod(string typeName, IEnumerable<ParameterSyntax> parameters)
+        private MethodDeclarationSyntax CreateCloneMethod(string typeName, IEnumerable<ParameterDefinition> parameters)
         {
-            string arguments = string.Join(", ", parameters.Select(p => $"Param<{p.Type}>? {p.Identifier.Text} = null"));
-            string constructorArguments = string.Join(",\n", parameters.Select(p => p.Identifier.Text)
+            string arguments = string.Join(", ", parameters.Select(p => $"Param<{p.Type}>? {p.Name} = null"));
+            string constructorArguments = string.Join(",\n", parameters.Select(p => p.Name)
                 .Select(n => $"{n}.HasValue ? {n}.Value.Value : {Common.PascalCasing(n)}"));
             string code = $@"return new {typeName}({constructorArguments});";
             var methodArugmentsList = SyntaxFactory.ParseParameterList($"({arguments})");
@@ -149,23 +149,67 @@ namespace Righthand.Immutable
             return x;
         }
 
+        private ParameterDefinition[] CollectBaseTypeConstructorParameters(INamedTypeSymbol typeSymbol)
+        {
+            var baseType = typeSymbol.BaseType;
+            if (baseType.SpecialType != SpecialType.System_Object && baseType.Constructors.Length == 1)
+            {
+                var baseTypeConstructor = baseType.Constructors[0];
+                return baseTypeConstructor.Parameters.Select(p => new ParameterDefinition(true, SyntaxFactory.ParseTypeName(p.Type.ToString()), p.Name)).ToArray();
+            }
+            return null;
+        }
+
         private async Task<Document> ImplementImmutableTypeAsync(Document document, TypeDeclarationSyntax typeDecl, ConstructorDeclarationSyntax constructor,
             CancellationToken cancellationToken)
         {
-            var root = await document.GetSyntaxRootAsync();
+            var semanticModelTask = document.GetSemanticModelAsync(cancellationToken);
+            var rootTask = document.GetSyntaxRootAsync();
             ClassDeclarationSyntax cds = typeDecl as ClassDeclarationSyntax;
             StructDeclarationSyntax sds = typeDecl as StructDeclarationSyntax;
+            List<ParameterDefinition> parameters = new List<ParameterDefinition>();
 
-            BlockSyntax newBody = CreateConstructorBody(constructor.ParameterList.Parameters);
-            var newConstructor = constructor.WithBody(newBody);
-            var newMembers = CreateProperties(constructor.ParameterList.Parameters);
+            var semanticModel = await semanticModelTask;
+            var typeSymbol = semanticModel.GetDeclaredSymbol(typeDecl, cancellationToken);
+            var baseTypeConstructorParameters = CollectBaseTypeConstructorParameters(typeSymbol);
+            bool hasBaseType = baseTypeConstructorParameters != null;
+            if (hasBaseType)
+            {
+                parameters.AddRange(baseTypeConstructorParameters);
+            }
+            var typeParametersQuery = from p in constructor.ParameterList.Parameters
+                                      where !parameters.Where(pb => pb.IsDefinedInBaseType).Any(pb => string.Equals(p.Identifier.Text, pb.Name))
+                                      let typeSyntax = SyntaxFactory.ParseTypeName(p.Type.ToString())
+                                      select new ParameterDefinition(false, typeSyntax, p.Identifier.Text);
+            parameters.InsertRange(0, typeParametersQuery);
+
+            BlockSyntax newBody = CreateConstructorBody(parameters.Where(p => !p.IsDefinedInBaseType));
+            var constructorParameters = SyntaxFactory.ParseParameterList($"({string.Join(", ", parameters.Select(p => p.Text))})");
+
+            ConstructorDeclarationSyntax newConstructor;
+            if (hasBaseType)
+            {
+                var argumentsText = parameters.Where(p => p.IsDefinedInBaseType).Select(p => p.Name);
+                var argumentList = SyntaxFactory.ParseArgumentList($"({string.Join(", ", argumentsText)})");
+                var initializer = SyntaxFactory.ConstructorInitializer(SyntaxKind.BaseConstructorInitializer, argumentList);
+                newConstructor = constructor.WithBody(newBody)
+                    .WithParameterList(constructorParameters)
+                    .WithInitializer(initializer);
+            }
+            else
+            {
+                newConstructor = constructor.WithBody(newBody);
+            }
+            
+            var newMembers = CreateProperties(parameters.Where(p => !p.IsDefinedInBaseType));
             newMembers = newMembers.Add(newConstructor);
             string typeIdentifierText = cds != null ? cds.Identifier.Text: sds.Identifier.Text;
-            var cloneMethod = CreateCloneMethod(typeIdentifierText, constructor.ParameterList.Parameters);
+            var cloneMethod = CreateCloneMethod(typeIdentifierText, parameters);
             newMembers = newMembers.Add(cloneMethod);
             var customMembers = GetCustomMembers(typeDecl.Members);
             newMembers = newMembers.AddRange(customMembers);
             CompilationUnitSyntax newRoot;
+            var root = await rootTask;
             if (cds != null)
             {
                 newRoot = (CompilationUnitSyntax)root.ReplaceNode(typeDecl, cds.WithMembers(newMembers));
