@@ -11,7 +11,7 @@ Current features:
 
 It works together with [Righthand.Immutable](https://www.nuget.org/packages/Righthand.Immutable) NuGet package.
 
-## Release notes
+## Visual Studio Extension Release notes
 
 1.0.3
 - properties with getter bodies and no setters are persisted
