@@ -11,6 +11,16 @@ Current features:
 
 It works together with [Righthand.Immutable](https://www.nuget.org/packages/Righthand.Immutable) NuGet package.
 
+## Release notes
+
+1.0.3
+- properties with getter bodies and no setters are persisted
+- lambda properties are persisted
+- all methods not named Clone are persisted
+
+1.0.0
+- first version
+
 ## Sample immutable type creation
 
 1. Install [Righthand.Immutable](https://marketplace.visualstudio.com/items?itemName=MihaMarkic.RighthandImmutable) VSIX extension

@@ -88,6 +88,53 @@ namespace Righthand.Immutable
             return result;
         }
 
+        /// <summary>
+        /// Collects all custom members that are persistent.
+        /// </summary>
+        /// <param name="members"></param>
+        /// <returns></returns>
+        /// <remarks>All properties that have a getter body/no setter and all methods not named Clone.</remarks>
+        private MemberDeclarationSyntax[] GetCustomMembers(SyntaxList<MemberDeclarationSyntax> members)
+        {
+            List<MemberDeclarationSyntax> result = new List<MemberDeclarationSyntax>(members.Count);
+            foreach (var member in members)
+            {
+                switch(member.Kind())
+                {
+                    case SyntaxKind.PropertyDeclaration:
+                        var propertyDeclaration = (PropertyDeclarationSyntax)member;
+                        // include lambda gettters
+                        if (propertyDeclaration.ExpressionBody != null)
+                        {
+                            result.Add(member);
+                        }
+                        else
+                        {
+                            var getter = propertyDeclaration.AccessorList?.Accessors.Where(a => a.IsKind(SyntaxKind.GetAccessorDeclaration)).SingleOrDefault();
+                            // include getters with body but only if no setter
+                            if (getter?.DescendantNodes().Any() ?? false)
+                            {
+                                var setter = propertyDeclaration.AccessorList?.Accessors.Where(a => a.IsKind(SyntaxKind.SetAccessorDeclaration)).SingleOrDefault();
+                                if (setter == null)
+                                {
+                                    result.Add(member);
+                                }
+                            }
+                        }
+                        break;
+                    case SyntaxKind.MethodDeclaration:
+                        var methodDeclaration = (MethodDeclarationSyntax)member;
+                        // include methods that aren't named Clone
+                        if (!string.Equals(methodDeclaration.Identifier.Text, "Clone", System.StringComparison.Ordinal))
+                        {
+                            result.Add(member);
+                        }
+                        break;
+                }
+            }
+            return result.ToArray();
+        }
+
         private MethodDeclarationSyntax CreateCloneMethod(string typeName, IEnumerable<ParameterSyntax> parameters)
         {
             string arguments = string.Join(", ", parameters.Select(p => $"Param<{p.Type}>? {p.Identifier.Text} = null"));
@@ -116,6 +163,8 @@ namespace Righthand.Immutable
             string typeIdentifierText = cds != null ? cds.Identifier.Text: sds.Identifier.Text;
             var cloneMethod = CreateCloneMethod(typeIdentifierText, constructor.ParameterList.Parameters);
             newMembers = newMembers.Add(cloneMethod);
+            var customMembers = GetCustomMembers(typeDecl.Members);
+            newMembers = newMembers.AddRange(customMembers);
             CompilationUnitSyntax newRoot;
             if (cds != null)
             {
