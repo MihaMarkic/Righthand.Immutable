@@ -1,13 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard1.0</TargetFramework>
+    <TargetFrameworks>netstandard1.0;net45</TargetFrameworks>
     <PackageId>Righthand.Immutable</PackageId>
-    <PackageVersion>1.0.0</PackageVersion>
+    <PackageVersion>1.0.1</PackageVersion>
     <Authors>Miha Markic</Authors>
     <Description>Support library for immutable types.</Description>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <PackageReleaseNotes>Initial release</PackageReleaseNotes>
+    <PackageReleaseNotes>Adds .net45 version.</PackageReleaseNotes>
     <Copyright>Copyright 2017 (c) Righthand. All rights reserved.</Copyright>
     <PackageTags>c# immutable</PackageTags>
     <Company>Righthand</Company>
