@@ -16,7 +16,7 @@ Task("BuildVsix")
 Task("BuildNuGet")
     .Does(() => {
         var settings = new MSBuildSettings {
-            Configuration = "Relase"
+            Configuration = "Release"
         }.WithTarget("pack");
         MSBuild(libraryProject, settings);
     }
