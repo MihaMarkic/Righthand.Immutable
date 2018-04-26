@@ -174,6 +174,7 @@ namespace Righthand.Immutable
             var semanticModel = await semanticModelTask;
             var typeSymbol = semanticModel.GetDeclaredSymbol(typeDecl, cancellationToken);
             var baseTypeConstructorParameters = CollectBaseTypeConstructorParameters(typeSymbol);
+
             bool hasBaseType = baseTypeConstructorParameters != null;
             if (hasBaseType)
             {
@@ -189,7 +190,8 @@ namespace Righthand.Immutable
             var constructorParameters = SyntaxFactory.ParseParameterList($"({string.Join(", ", parameters.Select(p => p.Text))})");
 
             ConstructorDeclarationSyntax newConstructor;
-            if (hasBaseType)
+            // implements call to base constructor only for classes
+            if (hasBaseType && cds != null)
             {
                 var argumentsText = parameters.Where(p => p.IsDefinedInBaseType).Select(p => p.Name);
                 var argumentList = SyntaxFactory.ParseArgumentList($"({string.Join(", ", argumentsText)})");
