@@ -12,7 +12,12 @@ Current features:
 It works together with [Righthand.Immutable](https://www.nuget.org/packages/Righthand.Immutable) NuGet package.
 
 ## Visual Studio Extension Release notes
+1.1.3
+
+* doesn't generate calls to base constructor for structs
+
 1.1.2
+
 - derived types with empty constructors can be made immutable
 
 1.1.1
