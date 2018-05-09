@@ -158,9 +158,10 @@ namespace Righthand.Immutable
         {
             string compare = string.Join(" && ", parameters.Select(p => $"Equals({Common.PascalCasing(p.Name)}, o.{Common.PascalCasing(p.Name)})"));
             string code =
-$@"if (obj == null || GetType() != obj.GetType()) return false;
+$@"         if (obj == null || GetType() != obj.GetType()) return false;
             var o = ({typeName})obj;
-            return {compare};";
+            return {compare};
+";
             var x = SyntaxFactory.MethodDeclaration(SyntaxFactory.IdentifierName("bool"), "Equals")
                .WithParameterList(SyntaxFactory.ParseParameterList("(object obj)"))
                .WithModifiers(SyntaxTokenList.Create(SyntaxFactory.Token(SyntaxKind.PublicKeyword)).Add(SyntaxFactory.Token(SyntaxKind.OverrideKeyword)))
