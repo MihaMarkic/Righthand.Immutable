@@ -12,6 +12,10 @@ Current features:
 It works together with [Righthand.Immutable](https://www.nuget.org/packages/Righthand.Immutable) NuGet package.
 
 ## Visual Studio Extension Release notes
+1.2.0
+
+* Adds Equals and GetHashCode method implementations.
+
 1.1.3
 
 * doesn't generate calls to base constructor for structs
@@ -90,8 +94,25 @@ public class MyImmutable
         public MyImmutable Clone(Param<int>? number = null, Param<string>? text = null)
         {
             return new MyImmutable(number.HasValue ? number.Value.Value : Number,
-text.HasValue ? text.Value.Value : Text);
+                text.HasValue ? text.Value.Value : Text);
         }
+
+        public override bool Equals(object obj)
+        {
+            if (obj == null || GetType() != obj.GetType()) return false;
+            var o = (MyImmutable)obj;
+            return Equals(Number, o.Number) && Equals(Text, o.Text);
+        }
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                int hash = base.GetHashCode();
+                hash = hash * 37 + Number.GetHashCode();
+                hash = hash * 37 + (Text != null ? Text.GetHashCode() : 0);
+                return hash;
+            }
+        }       
     }
 ```
 
