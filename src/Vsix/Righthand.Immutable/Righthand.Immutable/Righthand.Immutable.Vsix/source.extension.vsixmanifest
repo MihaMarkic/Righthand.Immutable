@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
     <Metadata>
-        <Identity Id="Righthand.Immutable..328069d4-9445-48a0-a423-7fbe645a68e1" Version="1.2.0" Language="en-US" Publisher="Righthand"/>
+        <Identity Id="Righthand.Immutable..328069d4-9445-48a0-a423-7fbe645a68e1" Version="1.2.1" Language="en-US" Publisher="Righthand"/>
         <DisplayName>Righthand.Immutable</DisplayName>
         <Description xml:space="preserve">Provides immutable type related features.</Description>
         <MoreInfo>https://github.com/MihaMarkic/Righthand.Immutable</MoreInfo>

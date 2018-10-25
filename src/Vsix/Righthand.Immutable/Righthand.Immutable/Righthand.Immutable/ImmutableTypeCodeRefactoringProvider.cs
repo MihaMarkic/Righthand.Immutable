@@ -305,9 +305,12 @@ $@"         if (obj == null || GetType() != obj.GetType()) return false;
         {
             if (type is INamedTypeSymbol namedType)
             {
-                if (namedType.TypeKind == TypeKind.Struct)
+                switch (namedType.TypeKind)
                 {
-                    return namedType.ConstructedFrom.SpecialType == SpecialType.System_Nullable_T;
+                    case TypeKind.Struct:
+                        return namedType.ConstructedFrom.SpecialType == SpecialType.System_Nullable_T;
+                    case TypeKind.Enum:
+                        return false;
                 }
             }
             return true;
