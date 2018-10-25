@@ -66,7 +66,7 @@ namespace Righthand.Immutable
             return newBody;
         }
 
-        private SyntaxList<MemberDeclarationSyntax> CreateProperties(IEnumerable<ParameterDefinition> parameters)
+        private SyntaxList<MemberDeclarationSyntax> CreateProperties(IEnumerable<ParameterDefinition> parameters, Dictionary<string, SyntaxTriviaList> leadingTrivia)
         {
             var result = SyntaxFactory.List<MemberDeclarationSyntax>();
             foreach (var parameter in parameters)
@@ -84,18 +84,55 @@ namespace Righthand.Immutable
                         )
                     )
                     .WithModifiers(SyntaxTokenList.Create(SyntaxFactory.Token(SyntaxKind.PublicKeyword)));
+                if (leadingTrivia.TryGetValue(name, out var lt))
+                {
+                    newProperty = newProperty.WithLeadingTrivia(lt);
+                }
                 result = result.Add(newProperty);
             }
             return result;
         }
 
+        static Dictionary<string, SyntaxTriviaList> GetNonCustomTrivia(SyntaxList<MemberDeclarationSyntax> members)
+        {
+            var query = from m in members
+                        where m.Kind() == SyntaxKind.PropertyDeclaration
+                        let p = (PropertyDeclarationSyntax)m
+                        where !IsPropertyCustom(p) && p.HasLeadingTrivia
+                        select p;
+            return query.ToDictionary(p => p.Identifier.Text, p => p.GetLeadingTrivia());
+        }
+
+        static bool IsPropertyCustom(PropertyDeclarationSyntax propertyDeclaration)
+        {
+            if (propertyDeclaration.ExpressionBody != null)
+            {
+                return true;
+            }
+            else
+            {
+                var getter = propertyDeclaration.AccessorList?.Accessors.Where(a => a.IsKind(SyntaxKind.GetAccessorDeclaration)).SingleOrDefault();
+                bool isAbstract = propertyDeclaration.Modifiers.Any(m => m.Kind() == SyntaxKind.AbstractKeyword);
+                // include getters with body but only if no setter
+
+                if (isAbstract || (getter?.DescendantNodes().Any() ?? false))
+                {
+                    var setter = propertyDeclaration.AccessorList?.Accessors.Where(a => a.IsKind(SyntaxKind.SetAccessorDeclaration)).SingleOrDefault();
+                    if (setter == null)
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
         /// <summary>
         /// Collects all custom members that are persistent.
         /// </summary>
         /// <param name="members"></param>
         /// <returns></returns>
         /// <remarks>All properties that have a getter body/no setter and all methods not named Clone, Equals or GetHashCode.</remarks>
-        private MemberDeclarationSyntax[] GetCustomMembers(SyntaxList<MemberDeclarationSyntax> members)
+        MemberDeclarationSyntax[] GetCustomMembers(SyntaxList<MemberDeclarationSyntax> members)
         {
             List<MemberDeclarationSyntax> result = new List<MemberDeclarationSyntax>(members.Count);
             foreach (var member in members)
@@ -105,24 +142,9 @@ namespace Righthand.Immutable
                     case SyntaxKind.PropertyDeclaration:
                         var propertyDeclaration = (PropertyDeclarationSyntax)member;
                         // include lambda getters
-                        if (propertyDeclaration.ExpressionBody != null)
+                        if (IsPropertyCustom(propertyDeclaration))
                         {
                             result.Add(member);
-                        }
-                        else
-                        {
-                            var getter = propertyDeclaration.AccessorList?.Accessors.Where(a => a.IsKind(SyntaxKind.GetAccessorDeclaration)).SingleOrDefault();
-                            bool isAbstract = propertyDeclaration.Modifiers.Any(m => m.Kind() == SyntaxKind.AbstractKeyword);
-                            // include getters with body but only if no setter
-
-                            if (isAbstract || (getter?.DescendantNodes().Any() ?? false))
-                            {
-                                var setter = propertyDeclaration.AccessorList?.Accessors.Where(a => a.IsKind(SyntaxKind.SetAccessorDeclaration)).SingleOrDefault();
-                                if (setter == null)
-                                {
-                                    result.Add(member);
-                                }
-                            }
                         }
                         break;
                     case SyntaxKind.MethodDeclaration:
@@ -256,8 +278,9 @@ $@"         if (obj == null || GetType() != obj.GetType()) return false;
             {
                 newConstructor = constructor.WithBody(newBody);
             }
-            
-            var newMembers = CreateProperties(parameters.Where(p => !p.IsDefinedInBaseType));
+
+            var persistentPropertiesLeadingTrivia = GetNonCustomTrivia(typeDecl.Members);
+            var newMembers = CreateProperties(parameters.Where(p => !p.IsDefinedInBaseType), persistentPropertiesLeadingTrivia);
             newMembers = newMembers.Add(newConstructor);
             string typeIdentifierText = cds != null ? cds.Identifier.Text: sds.Identifier.Text;
             bool isTypeAbstract = typeDecl.Modifiers.Any(m => m.Kind() == SyntaxKind.AbstractKeyword);
@@ -276,6 +299,7 @@ $@"         if (obj == null || GetType() != obj.GetType()) return false;
                 var getHashCodeMethod = CreateGetHashMethod(hasBaseType, typeParameters);
                 newMembers = newMembers.Add(getHashCodeMethod);
             }
+            // Collects custom members that are persisted
             var customMembers = GetCustomMembers(typeDecl.Members);
             newMembers = newMembers.AddRange(customMembers);
             CompilationUnitSyntax newRoot;
