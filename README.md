@@ -12,6 +12,17 @@ Current features:
 It works together with [Righthand.Immutable](https://www.nuget.org/packages/Righthand.Immutable) NuGet package.
 
 ## Visual Studio Extension Release notes
+1.2.3
+
+* adds generic parameters support
+
+1.2.2
+
+* preserves property comments
+
+1.2.1 
+* enums were treated like reference types
+
 1.2.0
 
 * Adds Equals and GetHashCode method implementations.
