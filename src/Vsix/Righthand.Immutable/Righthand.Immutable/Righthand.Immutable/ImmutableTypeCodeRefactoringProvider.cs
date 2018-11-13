@@ -162,7 +162,7 @@ namespace Righthand.Immutable
             return result.ToArray();
         }
 
-        private MethodDeclarationSyntax CreateCloneMethod(string typeName, IEnumerable<ParameterDefinition> parameters)
+        MethodDeclarationSyntax CreateCloneMethod(string typeName, IEnumerable<ParameterDefinition> parameters)
         {
             string arguments = string.Join(", ", parameters.Select(p => $"Param<{p.Type}>? {p.Name} = null"));
             string constructorArguments = string.Join(",\n\t\t\t\t", parameters.Select(p => p.Name)
@@ -282,7 +282,9 @@ $@"         if (obj == null || GetType() != obj.GetType()) return false;
             var persistentPropertiesLeadingTrivia = GetNonCustomTrivia(typeDecl.Members);
             var newMembers = CreateProperties(parameters.Where(p => !p.IsDefinedInBaseType), persistentPropertiesLeadingTrivia);
             newMembers = newMembers.Add(newConstructor);
-            string typeIdentifierText = cds != null ? cds.Identifier.Text: sds.Identifier.Text;
+            // gets superclass between struct and class ti
+            var typeIdentifier = cds != null ? cds : (TypeDeclarationSyntax)sds;
+            string typeIdentifierText = ConstructFullTypeName(typeIdentifier);
             bool isTypeAbstract = typeDecl.Modifiers.Any(m => m.Kind() == SyntaxKind.AbstractKeyword);
             if (!isTypeAbstract)
             {
@@ -324,7 +326,17 @@ $@"         if (obj == null || GetType() != obj.GetType()) return false;
 
             return newDocument;
         }
-
+        static string ConstructFullTypeName(TypeDeclarationSyntax tds)
+        {
+            //typeIdentifier.TypeParameterList.Parameters[0].Identifier
+            var typeParams = tds.TypeParameterList?.Parameters;
+            string typeParamsText = "";
+            if (typeParams?.Count > 0)
+            {
+                typeParamsText = $"<{string.Join(", ", typeParams.Value.Select(p => p.Identifier.Text))}>";
+            }
+            return $"{tds.Identifier.Text}{typeParamsText}";
+        }
         static bool CanTypeBeNull(ITypeSymbol type)
         {
             if (type is INamedTypeSymbol namedType)
@@ -335,6 +347,15 @@ $@"         if (obj == null || GetType() != obj.GetType()) return false;
                         return namedType.ConstructedFrom.SpecialType == SpecialType.System_Nullable_T;
                     case TypeKind.Enum:
                         return false;
+                }
+            }
+            // generic types
+            else if (type is ITypeSymbol typed)
+            {
+                switch (typed.TypeKind)
+                {
+                    case TypeKind.TypeParameter:
+                        return typed.IsReferenceType;
                 }
             }
             return true;
