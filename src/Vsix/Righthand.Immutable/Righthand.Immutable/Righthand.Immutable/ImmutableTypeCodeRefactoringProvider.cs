@@ -105,12 +105,18 @@ namespace Righthand.Immutable
 
         static bool IsPropertyCustom(PropertyDeclarationSyntax propertyDeclaration)
         {
+            
             if (propertyDeclaration.ExpressionBody != null)
             {
                 return true;
             }
             else
             {
+                bool isStatic = propertyDeclaration.Modifiers.Any(m => m.Kind() == SyntaxKind.StaticKeyword);
+                if (isStatic)
+                {
+                    return true;
+                }
                 var getter = propertyDeclaration.AccessorList?.Accessors.Where(a => a.IsKind(SyntaxKind.GetAccessorDeclaration)).SingleOrDefault();
                 bool isAbstract = propertyDeclaration.Modifiers.Any(m => m.Kind() == SyntaxKind.AbstractKeyword);
                 // include getters with body but only if no setter
