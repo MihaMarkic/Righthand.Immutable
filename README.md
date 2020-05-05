@@ -12,6 +12,10 @@ Current features:
 It works together with [Righthand.Immutable](https://www.nuget.org/packages/Righthand.Immutable) NuGet package.
 
 ## Visual Studio Extension Release notes
+1.2.4
+
+* adds Visual Studio 2019 support
+
 1.2.3
 
 * adds generic parameters support
