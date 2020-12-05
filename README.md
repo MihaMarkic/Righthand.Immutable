@@ -11,6 +11,10 @@ Current features:
 
 It works together with [Righthand.Immutable](https://www.nuget.org/packages/Righthand.Immutable) NuGet package.
 
+# IMPORTANT
+
+C# 9.0 introduced records that fit very well with immutable concept. If possible use records instead of this library.
+
 ## Visual Studio Extension Release notes
 1.2.4
 
